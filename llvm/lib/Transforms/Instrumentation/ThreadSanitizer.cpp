@@ -304,7 +304,7 @@ static bool isVtableAccess(Instruction *I) {
 }
 
 // Do not instrument known races/"benign races" that come from compiler
-// instrumentatin. The user has no way of suppressing them.
+// instrumentation. The user has no way of suppressing them.
 static bool shouldInstrumentReadWriteFromAddress(const Module *M, Value *Addr) {
   // Peel off GEPs and BitCasts.
   Addr = Addr->stripInBoundsOffsets();
@@ -312,10 +312,11 @@ static bool shouldInstrumentReadWriteFromAddress(const Module *M, Value *Addr) {
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Addr)) {
     if (GV->hasSection()) {
       StringRef SectionName = GV->getSection();
-      // Check if the global is in the PGO counters section.
+      // Check if the global is in the PGO or sancov counters section.
       auto OF = Triple(M->getTargetTriple()).getObjectFormat();
-      if (SectionName.endswith(
-              getInstrProfSectionName(IPSK_cnts, OF, /*AddSegmentInfo=*/false)))
+      if (SectionName.endswith(getInstrProfSectionName(
+              IPSK_cnts, OF, /*AddSegmentInfo=*/false)) ||
+          SectionName.endswith("sancov_cntrs"))
         return false;
     }
 
